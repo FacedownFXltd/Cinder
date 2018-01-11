@@ -215,7 +215,8 @@ class CI_API TextureBase {
 		void	setMagFilter( GLenum magFilter ) { mMagFilter = magFilter; }
 		//! Sets the anisotropic filter amount. A value greater than 1.0 "enables" anisotropic filtering. Maximum of getMaxAnisotropyMax();
 		void    setMaxAnisotropy( GLfloat maxAnisotropy ) { mMaxAnisotropy = maxAnisotropy; }
-		
+		//! Sets the compression hint when constructing texture. Possible values are \c GL_NICEST, \c GL_FASTEST. Default is \c GL_DONT_CARE.
+		void	setCompressionHint(GLenum compressionHint) { mCompressionHint = compressionHint; }
 		//! Returns the texture's target
 		GLenum	getTarget() const { return mTarget; }
 		//! Returns whether the texture has mipmapping enabled
@@ -270,9 +271,11 @@ class CI_API TextureBase {
 		//! Sets the debugging label associated with the Texture. Calls glObjectLabel() when available.
 		Format&				label( const std::string &label ) { setLabel( label ); return *this; }
 		
+
+
 	protected:
 		Format();
-	
+
 		GLenum				mTarget;
 		GLenum				mWrapS, mWrapT, mWrapR;
 		GLenum				mMinFilter, mMagFilter;
@@ -289,7 +292,7 @@ class CI_API TextureBase {
 		bool				mBorderSpecified;
 		std::array<GLfloat,4>	mBorderColor;
 		std::string			mLabel; // debug label
-
+		GLenum				mCompressionHint;
 #if ! defined( CINDER_GL_ES )		
 		PboRef				mIntermediatePbo;
 #endif
@@ -496,6 +499,8 @@ class CI_API Texture2d : public TextureBase {
 		Format& loadTopDown( bool loadTopDown = true ) { mLoadTopDown = loadTopDown; return *this; }
 		//! Sets whether the storage for the cannot be changed in the future (making glTexImage2D() calls illegal). More efficient when possible. Default is \c false.
 		Format& immutableStorage( bool immutable = true ) { setImmutableStorage( immutable ); return *this; }
+		//! Sets the compression hint to use when constructing texture. Does not effect existing data.
+		Format& setCompressionHint(GLenum compressionHint) { mCompressionHint = compressionHint; return *this; }
 #if ! defined( CINDER_GL_ES )
 		Format& intermediatePbo( const PboRef &intermediatePbo ) { setIntermediatePbo( intermediatePbo ); return *this; }
 #endif		
@@ -719,6 +724,7 @@ class CI_API TextureCubeMap : public TextureBase
 #endif // ! defined( CINDER_GL_ES )
 		Format& minFilter( GLenum minFilter ) { setMinFilter( minFilter ); return *this; }
 		Format& magFilter( GLenum magFilter ) { setMagFilter( magFilter ); return *this; }
+
 		//! Sets whether the storage for the cannot be changed in the future (making glTexImage2D() calls illegal). More efficient when possible. Default is \c false.
 		Format& immutableStorage( bool immutable = true ) { setImmutableStorage( immutable ); return *this; }
 		//! Sets the debugging label associated with the Texture. Calls glObjectLabel() when available.

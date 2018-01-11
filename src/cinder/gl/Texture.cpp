@@ -760,6 +760,7 @@ TextureBase::Format::Format()
 	mSwizzleMask[0] = GL_RED; mSwizzleMask[1] = GL_GREEN; mSwizzleMask[2] = GL_BLUE; mSwizzleMask[3] = GL_ALPHA;
 	mCompareMode = -1;
 	mCompareFunc = -1;
+	mCompressionHint = GL_DONT_CARE;
 }
 
 void TextureBase::Format::setSwizzleMask( GLint r, GLint g, GLint b, GLint a )
@@ -1286,7 +1287,12 @@ void Texture2d::initData( const void *data, GLenum dataFormat, const Format &for
 	ScopedTextureBind tbs( mTarget, mTextureId );
 
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-	glTexImage2D( mTarget, 0, mInternalFormat, mActualSize.x, mActualSize.y, 0, dataFormat, format.getDataType(), data );
+	if (format.mCompressionHint != GL_DONT_CARE) {
+		glHint(GL_TEXTURE_COMPRESSION_HINT, format.mCompressionHint);
+	}
+	glTexImage2D(mTarget, 0, mInternalFormat, mActualSize.x, mActualSize.y, 0, dataFormat, format.getDataType(), data);
+
+	//glTexImage2D( mTarget, 0, mInternalFormat, mActualSize.x, mActualSize.y, 0, dataFormat, format.getDataType(), data );
 
 	if( mMipmapping ) {
 		initMaxMipmapLevel();
