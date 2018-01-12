@@ -1292,8 +1292,6 @@ void Texture2d::initData( const void *data, GLenum dataFormat, const Format &for
 	}
 	glTexImage2D(mTarget, 0, mInternalFormat, mActualSize.x, mActualSize.y, 0, dataFormat, format.getDataType(), data);
 
-	//glTexImage2D( mTarget, 0, mInternalFormat, mActualSize.x, mActualSize.y, 0, dataFormat, format.getDataType(), data );
-
 	if( mMipmapping ) {
 		initMaxMipmapLevel();
 		glGenerateMipmap( mTarget );
