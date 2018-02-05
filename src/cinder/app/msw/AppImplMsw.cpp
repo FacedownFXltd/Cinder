@@ -183,30 +183,72 @@ INT CALLBACK getFolderPathBrowseCallbackProc( HWND hwnd, UINT uMsg, LPARAM /*lp*
 
 } // anonymous namespace
 
-fs::path AppImplMsw::getFolderPath( const fs::path &initialPath )
+#define UPDATE_FOLDERPATH
+fs::path AppImplMsw::getFolderPath(const fs::path &initialPath)
 {
 	string result;
-
+#ifndef UPDATE_FOLDERPATH
 	::BROWSEINFO bi = { 0 };
-	bi.lParam = reinterpret_cast<LPARAM>( initialPath.wstring().c_str() );
+	bi.lParam = reinterpret_cast<LPARAM>(initialPath.wstring().c_str());
 	bi.lpfn = getFolderPathBrowseCallbackProc;
+	bi.ulFlags = BIF_USENEWUI;
 	bi.lpszTitle = L"Pick a Directory";
-	::LPITEMIDLIST pidl = ::SHBrowseForFolder( &bi );
-	if( pidl ) {
+	::LPITEMIDLIST pidl = ::SHBrowseForFolder(&bi);
+	if (pidl) {
 		// get the name of the folder
 		TCHAR path[MAX_PATH];
-		if( ::SHGetPathFromIDList( pidl, path ) ) {
-			result = msw::toUtf8String( path );
+		if (::SHGetPathFromIDList(pidl, path)) {
+			result = msw::toUtf8String(path);
 		}
 
 		// free memory used
 		::IMalloc * imalloc = 0;
-		if( SUCCEEDED( ::SHGetMalloc( &imalloc ) ) ) {
-			imalloc->Free( pidl );
+		if (SUCCEEDED(::SHGetMalloc(&imalloc))) {
+			imalloc->Free(pidl);
 			imalloc->Release();
 		}
 	}
+#else
+	std::wstring wresult;
+	IFileOpenDialog *pFileOpen;
+	// Create the FileOpenDialog object.
+	auto hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
+		IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+	pFileOpen->SetOptions(FOS_PICKFOLDERS);
+	if (SUCCEEDED(hr))
+	{
+		// Show the Open dialog box.
+		hr = pFileOpen->Show(NULL);
 
+		// Get the file name from the dialog box.
+		if (SUCCEEDED(hr))
+		{
+			IShellItem *pItem;
+			hr = pFileOpen->GetResult(&pItem);
+			if (SUCCEEDED(hr))
+			{
+				PWSTR pszFilePath;
+				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+				//Copy the result if successful. 
+				if (SUCCEEDED(hr))
+				{
+					//	MessageBox(NULL, pszFilePath, L"File Path", MB_OK);
+					wresult = pszFilePath;
+					result = std::string(wresult.begin(), wresult.end());
+					CoTaskMemFree(pszFilePath);
+				}
+				pItem->Release();
+			}
+		}
+		pFileOpen->Release();
+	}
+	CoUninitialize();
+
+
+
+
+#endif
 	return result;
 }
 
